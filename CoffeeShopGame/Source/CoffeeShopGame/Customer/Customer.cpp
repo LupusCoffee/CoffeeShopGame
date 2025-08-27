@@ -30,3 +30,19 @@ void ACustomer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
+float ACustomer::CalculateTip() const
+{
+	//TODO: When manager is up and running, call it and gather all necessary data in here and add to the tip ammount
+	return tipAmount;
+}
+
+void ACustomer::AddPatience(float addAmount)
+{
+	stats.patienceTime += addAmount;
+}
+
+FCustomerStats ACustomer::GetCustomerStats() const
+{
+	return stats;
+}
+

@@ -6,6 +6,19 @@
 
 #include "Customer.generated.h"
 
+USTRUCT(BlueprintType)
+struct FCustomerStats
+{
+public:
+	GENERATED_BODY()
+
+	//TODO: Add prefered drinks enum when enum is made
+	
+	float patienceTime;
+	float playerRelationship;
+	float preferredAttraction;
+};
+
 UCLASS()
 class COFFEESHOPGAME_API ACustomer : public APawn
 {
@@ -25,4 +38,19 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
+	float CalculateTip() const;
+
+	void AddPatience(float addAmount);
+
+	FCustomerStats GetCustomerStats() const;
+
+private:
+	
+	UPROPERTY(VisibleAnywhere)
+	FCustomerStats stats;
+	
+	//Will be the number the NPC feels like it will tip
+	UPROPERTY(VisibleAnywhere)
+	float tipAmount = 0.0f;
 };
