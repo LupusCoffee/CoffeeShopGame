@@ -7,7 +7,7 @@
 // Sets default values
 ACustomer::ACustomer()
 {
-	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 }
 
@@ -22,27 +22,37 @@ void ACustomer::BeginPlay()
 void ACustomer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (shouldTickPatience)
+		UpdatePatienceTick(DeltaTime);
 }
 
-// Called to bind functionality to input
-void ACustomer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ACustomer::UpdatePatienceTime(float newTime)
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	patienceTime = newTime;
 }
 
-float ACustomer::CalculateTip() const
+void ACustomer::StartPatienceTick()
 {
-	//TODO: When manager is up and running, call it and gather all necessary data in here and add to the tip ammount
-	return tipAmount;
+	shouldTickPatience = true;
 }
 
-void ACustomer::AddPatience(float addAmount)
+void ACustomer::UpdatePatienceTick(float DeltaTime)
 {
-	stats.patienceTime += addAmount;
+	if (patienceTime > 0)
+	{
+		patienceTime -= DeltaTime;
+		
+	}
+
+	if (patienceTime <= 0)
+		EndPatienceTick();
 }
 
-FCustomerStats ACustomer::GetCustomerStats() const
+void ACustomer::EndPatienceTick()
 {
-	return stats;
-}
+	shouldTickPatience = false;
 
+	OnCustomerLostPatience.Broadcast();
+	
+}
