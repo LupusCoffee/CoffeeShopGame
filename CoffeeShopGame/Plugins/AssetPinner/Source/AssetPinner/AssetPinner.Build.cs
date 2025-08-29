@@ -44,7 +44,8 @@ public class AssetPinner : ModuleRules
                 "UMG",
                 "AssetRegistry",
                 "InputCore",
-                "UMGEditor"
+                "UMGEditor",
+				"EditorSubsystem"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

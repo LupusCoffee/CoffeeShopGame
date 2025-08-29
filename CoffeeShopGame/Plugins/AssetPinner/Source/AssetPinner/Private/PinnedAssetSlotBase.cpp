@@ -62,17 +62,21 @@ FReply UPinnedAssetSlotBase::NativeOnMouseButtonDoubleClick(const FGeometry& InG
 
 FReply UPinnedAssetSlotBase::NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
 {
-	if (!ParentRef->GetInUnpinMode())
+	if (!ParentRef->GetEditMode())
 		return FReply::Handled();
 
-	if (!GEngine)
+	if (!GEditor)
 		return FReply::Handled();
 
-	UPinnedAssetSubsystem* Subsystem = GEngine->GetEngineSubsystem<UPinnedAssetSubsystem>();
+	UPinnedAssetSubsystem* Subsystem = GEditor->GetEditorSubsystem<UPinnedAssetSubsystem>();
 	if (!Subsystem)
 		return FReply::Handled();
 
-	Subsystem->RemoveAssetPath(AssetPath);
+	if(InMouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton))
+		Subsystem->MoveAssetPath(AssetPath);
+
+	if (InMouseEvent.IsMouseButtonDown(EKeys::RightMouseButton))
+		Subsystem->RemoveAssetPath(AssetPath);
 
 	return FReply::Handled();
 }

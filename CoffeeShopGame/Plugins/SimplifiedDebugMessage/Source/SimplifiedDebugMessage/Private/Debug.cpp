@@ -15,7 +15,7 @@ void Debug::Log(FString Message, bool AddOnScreenMessage, float Duration)
 
 void Debug::LogWarning(FString Message, bool AddOnScreenMessage, float Duration)
 {
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *Message);
+	UE_LOG(LogTemp, Warning, TEXT("%s"), *Message); 
 
 	if (AddOnScreenMessage)
 		if (GEngine)
