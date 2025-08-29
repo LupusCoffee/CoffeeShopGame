@@ -15,7 +15,7 @@ public:
 	//Contructor
 	UInteractionComponent();
 
-	//Variables
+	//Variables --> Editable
 	UPROPERTY(EditAnywhere, Category="Interaction")
 	float TraceLength = 500.0f;
 
@@ -38,22 +38,25 @@ public:
 	
 	
 protected:
+	//Contructors
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason);
+	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-	UPROPERTY()
-	APlayerController* PlayerController = nullptr;
 	
+	//Variables --> Visible
 	UPROPERTY(VisibleAnywhere, Category="Interaction")
 	AActor* FocusActor = nullptr;
 
+	//Variables --> Hidden
+	UPROPERTY()
+	APlayerController* PlayerController = nullptr;
+
+	UPROPERTY()
+	FTimerHandle FocusTimer;
+	
+
+	//Methods
 	UFUNCTION()
 	void UpdateFocusActor();
-	
-	
-	//todo:
-	//- configurable trace (lenght, channel, radius, frequency)
-	//- currently looked-at interactable --> focus actor
-	//- input hook --> call from pawn
-	//- call interface on unhover / hover / interact
-
 };
