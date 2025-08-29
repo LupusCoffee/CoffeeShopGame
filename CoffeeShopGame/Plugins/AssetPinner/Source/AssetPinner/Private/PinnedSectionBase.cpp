@@ -4,6 +4,7 @@
 #include "PinnedSectionBase.h"
 #include "PinnedAssetSubsystem.h"
 #include "Components/WrapBox.h"
+#include "EditorUtilityWidgetComponents.h"
 #include "PinnedAssetSlotBase.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 
@@ -11,63 +12,80 @@ void UPinnedSectionBase::NativeConstruct()
 {
 	Super::NativeConstruct();
 	
-	if (!GEngine)
+	if (!GEditor)
 		return;
 
-	UPinnedAssetSubsystem* PinnedAssetSubsystem = GEngine->GetEngineSubsystem<UPinnedAssetSubsystem>();
+	UPinnedAssetSubsystem* PinnedAssetSubsystem = GEditor->GetEditorSubsystem<UPinnedAssetSubsystem>();
 	if (!PinnedAssetSubsystem)
 		return;
 
 	PinnedAssetSubsystem->OnListChangedDelegate.BindDynamic(this, &UPinnedSectionBase::OnListChangedCallback);
 
-	Refresh(PinnedAssetSubsystem->GetAssetPathList());
+	Refresh(PinnedAssetSubsystem->GetAssetPathList(), PinnedAssetSubsystem->GetStatusList());
+
+	ClearButton->OnClicked.AddDynamic(this, &UPinnedSectionBase::OnClearButtonClicked);
 }
 
-void UPinnedSectionBase::OnListChangedCallback(const TArray<FString>& List)
+bool UPinnedSectionBase::GetEditMode()
 {
-	Refresh(List);
+	return EditMode;
 }
 
-void UPinnedSectionBase::Refresh(const TArray<FString>& List)
+void UPinnedSectionBase::OnListChangedCallback(const TArray<FString>& List, const TArray<bool>& StatusList)
+{
+	Refresh(List, StatusList);
+}
+
+void UPinnedSectionBase::Refresh(const TArray<FString>& List, const TArray<bool>& StatusList)
 {
 	if (!AssetSlotWidget) return;
 
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
 
-	WrapBox->ClearChildren();
-	for (auto& AssetPath : List)
+	PinnedWrapBox->ClearChildren();
+	RecentWrapBox->ClearChildren();
+
+	for (int i = 0; i < List.Num(); i++)
 	{
 		TArray<FAssetData> Assets;
-		AssetRegistry.GetAssetsByPackageName(FName(AssetPath), Assets);
+		AssetRegistry.GetAssetsByPackageName(FName(List[i]), Assets);
 		if (Assets.Num() <= 0)
 			continue;
 
 		UPinnedAssetSlotBase* NewSlot = CreateWidget<UPinnedAssetSlotBase>(this, AssetSlotWidget);
-		NewSlot->SetAssetData(AssetPath, Assets[0]);
+		NewSlot->SetAssetData(List[i], Assets[0]);
 		NewSlot->SetParentRef(this);
 
-		WrapBox->AddChildToWrapBox(NewSlot);
+		if (StatusList[i])
+			PinnedWrapBox->AddChildToWrapBox(NewSlot);
+		else
+			RecentWrapBox->AddChildToWrapBox(NewSlot);
 	}
 
 	return;
 }
 
+void UPinnedSectionBase::OnClearButtonClicked()
+{
+	UPinnedAssetSubsystem* PinnedAssetSubsystem = GEditor->GetEditorSubsystem<UPinnedAssetSubsystem>();
+	if (!PinnedAssetSubsystem)
+		return;
+
+	PinnedAssetSubsystem->ClearRecent();
+}
+
+
 FReply UPinnedSectionBase::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
 	if (InKeyEvent.GetKey() == EKeys::LeftControl)
-		InUnpinMode = true;
+		EditMode = true;
 	return FReply::Handled();
 }
 
 FReply UPinnedSectionBase::NativeOnKeyUp(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
 {
 	if (InKeyEvent.GetKey() == EKeys::LeftControl)
-		InUnpinMode = false;
+		EditMode = false;
 	return FReply::Handled();
-}
-
-bool UPinnedSectionBase::GetInUnpinMode()
-{
-	return InUnpinMode;
 }

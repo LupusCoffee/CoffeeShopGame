@@ -23,7 +23,7 @@
 		},
 		{
 			"Name": "GameplayStateTree",
-			"Enabled": false
+			"Enabled": true
 		}
 	]
 }

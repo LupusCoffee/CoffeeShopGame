@@ -4,30 +4,88 @@
 #include "PinnedAssetSubsystem.h"
 #include "Misc/PackageName.h"
 
-void UPinnedAssetSubsystem::AddAssetPath(FString Path)
+void UPinnedAssetSubsystem::AddAssetPath(FString Path, bool IsPinned)
 {
 	if (!AssetPathList.Contains(Path))
 	{
 		AssetPathList.Add(Path);
+		StatusList.Add(IsPinned);
 
-		FFileHelper::SaveStringArrayToFile(AssetPathList, *FilePath);
+		TArray<FString> SaveList;
+		for (int i = 0; i < AssetPathList.Num(); i++)
+		{
+			SaveList.Add(AssetPathList[i] + ' ' + (StatusList[i] ? '1' : '0'));
+		}
+		FFileHelper::SaveStringArrayToFile(SaveList, *FilePath);
 
 		if (OnListChangedDelegate.IsBound())
-			OnListChangedDelegate.Execute(AssetPathList);
-	} 
+			OnListChangedDelegate.Execute(AssetPathList, StatusList);
+	}
 }
 
 void UPinnedAssetSubsystem::RemoveAssetPath(FString Path)
 {
-	if (AssetPathList.Contains(Path))
+	int Index = -1;
+	if (AssetPathList.Find(Path, Index))
 	{
-		AssetPathList.Remove(Path);
+		AssetPathList.RemoveAt(Index);
+		StatusList.RemoveAt(Index);
 
-		FFileHelper::SaveStringArrayToFile(AssetPathList, *FilePath);
+		TArray<FString> SaveList;
+		for (int i = 0; i < AssetPathList.Num(); i++)
+		{
+			SaveList.Add(AssetPathList[i] + ' ' + (StatusList[i] ? '1' : '0'));
+		}
+		FFileHelper::SaveStringArrayToFile(SaveList, *FilePath);
 
 		if (OnListChangedDelegate.IsBound())
-			OnListChangedDelegate.Execute(AssetPathList);
+			OnListChangedDelegate.Execute(AssetPathList, StatusList);
 	}
+}
+
+void UPinnedAssetSubsystem::MoveAssetPath(FString Path)
+{
+	int Index = -1;
+	if (AssetPathList.Find(Path, Index))
+	{
+		if (StatusList[Index])
+			return;
+
+		StatusList[Index] = true;
+
+		TArray<FString> SaveList;
+		for (int i = 0; i < AssetPathList.Num(); i++)
+		{
+			SaveList.Add(AssetPathList[i] + ' ' + (StatusList[i] ? '1' : '0'));
+		}
+		FFileHelper::SaveStringArrayToFile(SaveList, *FilePath);
+
+		if (OnListChangedDelegate.IsBound())
+			OnListChangedDelegate.Execute(AssetPathList, StatusList);
+	}
+}
+
+void UPinnedAssetSubsystem::ClearRecent()
+{
+	for (int i = 0; i < AssetPathList.Num(); i++)
+	{
+		if (!StatusList[i])
+		{
+			AssetPathList.RemoveAt(i);
+			StatusList.RemoveAt(i);
+			i--;
+		}
+	}
+
+	TArray<FString> SaveList;
+	for (int i = 0; i < AssetPathList.Num(); i++)
+	{
+		SaveList.Add(AssetPathList[i] + ' ' + (StatusList[i] ? '1' : '0'));
+	}
+	FFileHelper::SaveStringArrayToFile(SaveList, *FilePath);
+
+	if (OnListChangedDelegate.IsBound())
+		OnListChangedDelegate.Execute(AssetPathList, StatusList);
 }
 
 const TArray<FString>& UPinnedAssetSubsystem::GetAssetPathList()
@@ -35,36 +93,54 @@ const TArray<FString>& UPinnedAssetSubsystem::GetAssetPathList()
 	return AssetPathList;
 }
 
+const TArray<bool>& UPinnedAssetSubsystem::GetStatusList()
+{
+	return StatusList;
+}
+
 void UPinnedAssetSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
 	FilePath = FPaths::GameUserDeveloperDir() + "PinnedAssetData.txt";
+	TArray<FString> LoadList;
+	FFileHelper::LoadFileToStringArray(LoadList, *FilePath);
+	bool IsPinned = false;
 
-	FFileHelper::LoadFileToStringArray(AssetPathList, *FilePath);
+	for (auto& line : LoadList)
+	{
+		FString Path, Status;
+		line.Split(" ", &Path, &Status);
+		AssetPathList.Add(Path);
+		StatusList.Add(Status == "1");
+	}
 
-	TArray<FString> PendingRemove;
-	for (auto& Path : AssetPathList)
+	TArray<int> PendingRemove;
+	for (int i = 0; i < AssetPathList.Num(); i++)
 	{
 		FPackagePath OutPath;
 		FPackagePath PackagePath;
-		if (FPackagePath::TryFromPackageName(Path, PackagePath))
+		if (FPackagePath::TryFromPackageName(AssetPathList[i], PackagePath))
 		{
 			if (!FPackageName::DoesPackageExist(PackagePath, &OutPath))
 			{
-				PendingRemove.Add(Path);
+				PendingRemove.Add(i);
 
-				UE_LOG(LogTemp, Warning, TEXT("Cannot find file: %s"), *Path);
+				UE_LOG(LogTemp, Warning, TEXT("Cannot find file: %s"), *AssetPathList[i]);
 			}
 		}
 	}
 
-	AssetPathList.RemoveAll([PendingRemove](FString Candidate) {return PendingRemove.Contains(Candidate); });
+	for (auto& Index : PendingRemove)
+	{
+		AssetPathList.RemoveAt(Index);
+		StatusList.RemoveAt(Index);
+	}
 
 	UAssetEditorSubsystem* AssetEditorSubsystem = GEditor ? GEditor->GetEditorSubsystem<UAssetEditorSubsystem>() : nullptr;
 	if (!AssetEditorSubsystem)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Open Asset Window Failed - Asset Editor Subsystem is not valid"));
+		UE_LOG(LogTemp, Error, TEXT("Bind Event Failed - Asset Editor Subsystem is not valid"));
 		return;
 	}
 
@@ -75,5 +151,5 @@ void UPinnedAssetSubsystem::OnAssetEditorOpen(UObject* Asset)
 {
 	FAssetData AssetData(Asset);
 
-	UE_LOG(LogTemp, Warning, TEXT("%s"), *AssetData.PackageName.ToString());
+	AddAssetPath(AssetData.PackageName.ToString(), false);
 }

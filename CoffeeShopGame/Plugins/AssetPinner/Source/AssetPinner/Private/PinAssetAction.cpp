@@ -25,8 +25,8 @@ void UPinAssetAction::PinAssets()
 		FString AssetPath = AssetData.PackageName.ToString();
 
 		UPinnedAssetSubsystem* Subsystem = nullptr;
-		if (GEngine)
-			Subsystem = GEngine->GetEngineSubsystem<UPinnedAssetSubsystem>();
+		if (GEditor)
+			Subsystem = GEditor->GetEditorSubsystem<UPinnedAssetSubsystem>();
 
 		if (Subsystem)
 			Subsystem->AddAssetPath(AssetPath);
