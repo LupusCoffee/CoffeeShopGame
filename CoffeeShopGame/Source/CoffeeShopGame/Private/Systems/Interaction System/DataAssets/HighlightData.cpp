@@ -5,6 +5,11 @@ UMaterialInterface* UHighlightData::GetHighlightMaterial()
 	return HighlightMaterial;
 }
 
+FName UHighlightData::GetHighlightMatColorVariableName()
+{
+	return HighlightMatColorVariableName;
+}
+
 FLinearColor UHighlightData::GetColor(EActorType ActorType)
 {
 	return HighlightData[ActorType];

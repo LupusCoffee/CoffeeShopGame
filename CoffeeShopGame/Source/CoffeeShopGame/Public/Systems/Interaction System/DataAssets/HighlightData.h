@@ -16,12 +16,18 @@ public:
 	UMaterialInterface* GetHighlightMaterial();
 
 	UFUNCTION(Category = "Highlight")
+	FName GetHighlightMatColorVariableName();
+
+	UFUNCTION(Category = "Highlight")
 	FLinearColor GetColor(EActorType ActorType);
 
 protected:
 	//Variables --> Edit
 	UPROPERTY(EditAnywhere, Category = "Highlight")
 	UMaterialInterface* HighlightMaterial;
+
+	UPROPERTY(EditAnywhere, Category = "Highlight")
+	FName HighlightMatColorVariableName = "Color";
 
 	UPROPERTY(EditAnywhere, Category = "Highlight")
 	TMap<EActorType, FLinearColor> HighlightData;

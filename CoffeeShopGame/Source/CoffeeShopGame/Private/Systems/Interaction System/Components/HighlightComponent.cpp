@@ -25,9 +25,10 @@ void UHighlightComponent::EnableHighlight(EActorType ActorType)
 	{
 		UMaterialInterface* HighlightMat = HighlightData->GetHighlightMaterial();
 		
-		//todo: undo the hardcoding + dont create everytime
+		//todo: create a subsystem that, upon start, makes a list UMaterialInstanceDynamic
+		//for each ActorType from HighlightData --> take DynamicMats from there via ActorType enum
 		UMaterialInstanceDynamic* DynMaterial = UMaterialInstanceDynamic::Create(HighlightMat, this);
-		DynMaterial->SetVectorParameterValue(FName("Color"), HighlightData->GetColor(ActorType));
+		DynMaterial->SetVectorParameterValue(HighlightData->GetHighlightMatColorVariableName(), HighlightData->GetColor(ActorType));
 		
 		HighlightedMesh->SetOverlayMaterial(DynMaterial);
 	}
