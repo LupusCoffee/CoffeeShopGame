@@ -3,54 +3,51 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
+#include "GameFramework/Character.h"
 #include "Customer.generated.h"
 
-USTRUCT(BlueprintType)
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCustomerLostPatience);
+
+USTRUCT()
 struct FCustomerStats
 {
-public:
 	GENERATED_BODY()
 
-	//TODO: Add prefered drinks enum when enum is made
-	
-	float patienceTime;
-	float playerRelationship;
-	float preferredAttraction;
+	//TODO: Add prefered drinks
+	//TODO: Relationship with player
+	//TODO: Add preffered attractions
+
+	FString name;
+	float Patience;
 };
 
 UCLASS()
-class COFFEESHOPGAME_API ACustomer : public APawn
+class COFFEESHOPGAME_API ACustomer : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this pawn's properties
+	// Sets default values for this character's properties
 	ACustomer();
 
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	void UpdatePatienceTime(float newTime);
+
+	void StartPatienceTick();
+	void UpdatePatienceTick(float DeltaTime);
+	void EndPatienceTick();
+
+	UPROPERTY(BlueprintAssignable, Category="Events")
+	FOnCustomerLostPatience OnCustomerLostPatience;
 	
-	float CalculateTip() const;
+	FCustomerStats stats;
 
-	void AddPatience(float addAmount);
-
-	FCustomerStats GetCustomerStats() const;
+protected:
+	virtual void BeginPlay() override;
 
 private:
-	
-	UPROPERTY(VisibleAnywhere)
-	FCustomerStats stats;
-	
-	//Will be the number the NPC feels like it will tip
-	UPROPERTY(VisibleAnywhere)
-	float tipAmount = 0.0f;
+	float patienceTime = 0;
+
+	bool shouldTickPatience = false;
 };

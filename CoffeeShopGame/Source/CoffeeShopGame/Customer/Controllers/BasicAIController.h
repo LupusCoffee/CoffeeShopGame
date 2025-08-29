@@ -1,24 +1,25 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Actor.h"
-#include "TempToGenerateSourceFiles.generated.h"
+#include "AIController.h"
+#include "BasicAIController.generated.h"
 
 UCLASS()
-class COFFEESHOPGAME_API ATempToGenerateSourceFiles : public AActor
+class COFFEESHOPGAME_API ABasicAIController : public AAIController
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
-	ATempToGenerateSourceFiles();
+	ABasicAIController();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
 };
